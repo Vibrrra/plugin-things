@@ -1,9 +1,222 @@
+
+
+export component Example inherits Path {
+    width: 100px;
+    height: 100px;
+    stroke: blue;
+    stroke-width: 1px;
+
+    MoveTo {
+        x: -50;
+        y: 0;
+    }
+    ArcTo {
+        radius-x: 25;
+        radius-y: 25;
+        x: 0;
+        y: 50;
+    }
+    ArcTo {
+        radius-x: 25;
+        radius-y: 25;
+        x: 50;
+        y: 50;
+    }
+    // LineTo {
+    //     x: 100;
+    //     y: 0;
+    // }
+    Close {
+    }
+}
+export global Util {
+    function round(x: float, n: int) -> float {
+        Math.round(x * Math.pow(10,n)) / Math.pow(10,n) 
+    }
+
+    pure callback convert_time(x: float) -> float;
+    // public function format_time(x: float, n: int) -> float {
+    //     property  x;
+    //      = x * + 50; 
+    //     10 * Math.log(x,10)
+    //     // Math.round(x * Math.pow(10,n)) / Math.pow(10,n) ;
+    // }
+
+}
+
+component Knob inherits Rectangle {
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    in-out property <float> val;
+    property<float> angle: 0.0;
+
+    im := Image {
+        source: @image-url("knob.svg");
+        width: parent.width;
+        height: parent.height;
+        // rotation-angle: ta.has-hover ? 120deg : -120deg; // root.angle *1deg;
+        rotation-origin-x: self.width /2;  // 2px;  
+        rotation-origin-y: self.height /2; // 2px;
+
+        // animate rotation-angle {
+        //     easing: ease-in;
+        //     duration: 200ms;
+        // }
+    }
+
+    ta :=TouchArea {
+        // anchors.fill: parent;
+
+        property <length> dx;
+        in-out property <length> px;
+        property <length> mx: 10px;
+        property <length> py;
+        property <length> dist;
+
+        property <length> dy;
+        property <angle> da;
+        property <length> sign;
+        pointer-event(pe) => {
+
+            if pe.kind == PointerEventKind.down {
+                // dx = 0;
+               px = self.mouse-x;       
+               py = self.mouse-y;       
+                
+               da = im.rotation-angle;
+            }
+
+            if self.pressed && pe.kind == PointerEventKind.move{
+                dy = (py - self.mouse-y) / 1;
+                sign = clamp(dy, -1px,1px);    
+                im.rotation-angle = clamp(im.rotation-angle + sign/1px * (2 * Math.abs(dy)/1px ) *1deg, -120deg, 120deg);
+                py = self.mouse-y; 
+            } 
+            val = (120 + im.rotation-angle / 1deg) / 240 * 1; 
+        } 
+        double-clicked => {
+            im.rotation-angle = 0;
+        }
+        
+        }
+
+    }
+
+global UiTheme {
+    out property <string >font-family: "Cascadia Code";
+    out property <color>background: black;
+
+
+}
+
 export struct UiParameter {
     id: int,
     normalized-value: float,
     default-normalized-value: float,
     display-value: string,
 }
+
+export component DelayUI inherits Window {
+
+    // Important
+    callback start-parameter-change(int);
+    callback change-parameter-value(int, float);
+    callback end-parameter-change(int);    
+    
+    in-out property <UiParameter> time;
+    in-out property <UiParameter> feedback;
+    in-out property <UiParameter> mix;
+    in-out property <UiParameter> color-freq;
+
+    width: 250px;
+    height: 180px;
+    property <duration> t;
+    pure callback convert_time(x: float) -> float; 
+    function tt(x:duration) -> duration {
+        
+        return x ;
+    } 
+    
+    Rectangle {
+        background: black;
+        
+        
+        VerticalLayout {
+            alignment: end;
+            width: parent.width;
+            padding-bottom: 10px;
+
+            Rectangle  {
+                ta:= TouchArea{} 
+                height: 80px; 
+                clip: true;
+                Text{
+                    // init() => {
+                    //     self.color = Colors.aquamarine;
+                    //     self.color = Colors.aquamarine.darker(0.5);
+                        
+                    //     t = 2000ms;
+                    // }
+                    animate color {
+                        easing: ease-in-elastic; 
+                        duration: param-time.val * 1000ms;
+                        iteration-count: -1;
+                    } 
+                    // animate font-size {
+                    //      easing: ease-in-circ; 
+                    //     duration: 500ms;
+                    // }
+                    // animate rotation-angle {
+                    //      easing: ease-in; 
+                    //     duration: 20ms;
+                    // }
+
+                    rotation-angle: ta.has-hover ? 0deg : 140*360deg;
+                    
+                    text: "SimpleDelay"; 
+                    color: ta.has-hover ? Colors.aquamarine : white; 
+                    font-family: UiTheme.font-family; 
+                    font-size:   24pt ; 
+                    horizontal-alignment: center; 
+                    vertical-alignment: center;}}
+
+            HorizontalLayout {
+                  Rectangle {background: Colors.aquamarine; width: parent.width/4; height: 20px; Text { text: time.display-value; font-size: 12pt; color: grey; horizontal-alignment: center; font-family: UiTheme.font-family;} }
+                  Rectangle {background: Colors.aquamarine; width: parent.width/4; height: 20px; Text { text: feedback.display-value + "%"; font-size: 12pt; color: grey; horizontal-alignment: center; font-family: UiTheme.font-family;} }
+                  Rectangle {background: Colors.aquamarine; width: parent.width/4; height: 20px; Text { text: mix.display-value + "%"; font-size: 12pt; color: grey; horizontal-alignment: center; font-family: UiTheme.font-family;} }
+                  Rectangle {background: Colors.aquamarine; width: parent.width/4; height: 20px; Text { text: color-freq.display-value; font-size: 12pt; color: grey; horizontal-alignment: center; font-family: UiTheme.font-family;} }
+            
+            }
+            HorizontalLayout {
+                width: parent.width;
+                // alignment: stretch;
+                // spacing: 10px;
+                Rectangle {width: parent.width/4; height: 20px; Text {  text: "Time";     horizontal-alignment: center; font-family: UiTheme.font-family;} }
+                Rectangle {width: parent.width/4; height: 20px; Text {  text:  "FB";     horizontal-alignment: center; font-family:  UiTheme.font-family;} }
+                Rectangle {width: parent.width/4; height: 20px; Text {  text: "Mix";     horizontal-alignment: center; font-family:  UiTheme.font-family;} }
+                Rectangle {width: parent.width/4; height: 20px; Text {  text: "Color";   horizontal-alignment: center; font-family:  UiTheme.font-family;} }
+
+            }
+            knobrow := HorizontalLayout {
+
+                width: parent.width;
+                // spacing: 20px;
+                // alignment: stretch;
+                // spacing: 10px;
+                Rectangle {width: parent.width/4;param-time := Knob{val: 0.5;}}
+                Rectangle {width: parent.width/4;param-fb := Knob{val: 0.5;}}
+                Rectangle {width: parent.width/4;param-mix := Knob{val: 0.5;}}
+                Rectangle {width: parent.width/4;param-color := Knob{val: 0.5;}}
+            }
+        }
+}   
+
+}
+
+ 
+
+
 
 export component PluginWindow inherits Window {
     width: 400px;

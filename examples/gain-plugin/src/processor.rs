@@ -1,24 +1,27 @@
-use plinth_plugin::{plinth_core::signals::signal::{Signal, SignalMut}, Event, FloatParameter, Parameters, ProcessState, Processor, Transport};
+use plinth_plugin::{plinth_core::signals::signal::{Signal, SignalMut}, BoolParameter, Event, FloatParameter, Parameters, ProcessState, Processor, Transport};
 
-use crate::parameters::{GainParameter, GainParameters};
+use crate::parameters::{DelayParameter, DelayParameters};
 
 fn db_to_amplitude(db: f32) -> f32 {
     10.0_f32.powf(db / 20.0)
 }
 
-pub struct GainPluginProcessor {
-    parameters: GainParameters,
+// pub struct GainPluginProcessor {
+//     parameters: GainParameters,
+// }
+pub struct DelayPluginProcessor {
+    parameters: DelayParameters,
 }
 
-impl GainPluginProcessor {
-    pub fn new(parameters: GainParameters) -> Self {
+impl DelayPluginProcessor {
+    pub fn new(parameters: DelayParameters) -> Self {
         Self {
             parameters,
         }
     }
 }
 
-impl Processor for GainPluginProcessor {
+impl Processor for DelayPluginProcessor {
     fn reset(&mut self) {
     }
 
@@ -32,13 +35,20 @@ impl Processor for GainPluginProcessor {
         for event in events {
             self.parameters.process_event(&event);
         }
+        let transport = _transport.unwrap();
+        let tempo = transport.tempo();
 
-        let gain_db = self.parameters.value::<FloatParameter>(GainParameter::Gain);
-        let gain = db_to_amplitude(gain_db as _);
+        if self.parameters.value::<BoolParameter>(DelayParameter::Sync) == true {
+            
+        }  
+        let mix = self.parameters.value::<FloatParameter>(DelayParameter::Mix);
+
+        // let gain_db = self.parameters.value::<FloatParameter>(DelayParameter::Gain);
+        // let gain = db_to_amplitude(mix as _);
 
         for channel in buffer.iter_channels_mut() {
             for sample in channel.iter_mut() {
-                *sample *= gain;
+                *sample *= mix as f32;
             }
         }        
 
@@ -48,6 +58,7 @@ impl Processor for GainPluginProcessor {
     fn process_events(&mut self, events: impl Iterator<Item = Event>) {
         for event in events {
             self.parameters.process_event(&event);
+            
         }
     }
 }

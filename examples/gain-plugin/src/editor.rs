@@ -3,16 +3,16 @@ use std::rc::Rc;
 use plinth_plugin::{raw_window_handle::RawWindowHandle, Editor, Host};
 use plugin_canvas_slint::{editor::{EditorHandle, SlintEditor}, plugin_canvas::window::WindowAttributes};
 
-use crate::{parameters::GainParameters, view::GainPluginView};
+use crate::{parameters::DelayParameters, view::DelayPluginView};
 
-pub struct GainPluginEditor {
+pub struct DelayPluginEditor {
     host: Rc<dyn Host>,
     editor_handle: Option<Rc<EditorHandle>>,
-    parameters: Rc<GainParameters>,
+    parameters: Rc<DelayParameters>,
 }
 
-impl GainPluginEditor {
-    pub fn new(host: Rc<dyn Host>, parameters: Rc<GainParameters>) -> Self {
+impl DelayPluginEditor {
+    pub fn new(host: Rc<dyn Host>, parameters: Rc<DelayParameters>) -> Self {
         Self {
             host,
             editor_handle: None,
@@ -21,7 +21,7 @@ impl GainPluginEditor {
     }
 }
 
-impl Editor for GainPluginEditor {
+impl Editor for DelayPluginEditor {
     const DEFAULT_SIZE: (f64, f64) = (400.0, 300.0);
 
     fn open(&mut self, parent: RawWindowHandle) {
@@ -36,7 +36,7 @@ impl Editor for GainPluginEditor {
                 let host = self.host.clone();
                 
                 move |_| {
-                    GainPluginView::new(parameters.clone(), host.clone())
+                    DelayPluginView::new(parameters.clone(), host.clone())
                 }
             },
         );
